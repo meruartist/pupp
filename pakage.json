@@ -1,7 +1,6 @@
 {
     "name": "dunam-puppeteer-api",
     "version": "1.0.0",
-    "description": "던담 Puppeteer API for Render",
     "main": "server.js",
     "scripts": {
       "start": "node server.js"
