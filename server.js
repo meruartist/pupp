@@ -38,19 +38,21 @@ app.get('/api/dunam', async (req, res) => {
 
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
-        await page.waitForSelector('.demval', { timeout: 5000 });
+        await page.waitForSelector('.abbot-alldeal', { timeout: 5000 });
 
         console.log('✅ 페이지 접속 성공:', url);
 
         const data = await page.evaluate(() => {
-            const all = Array.from(document.querySelectorAll('.demval'));
+            const section = document.querySelector('.abbot-alldeal'); // 하단 총딜 구간
+            if (!section) return { value: null, isBuff: false };
+
+            const rows = Array.from(section.querySelectorAll('.demval'));
             let value = null;
             let isBuff = false;
 
-            for (const el of all) {
+            for (const el of rows) {
                 const titleEl = el.querySelector('.dvtit');
                 const valueEl = el.querySelector('.dval');
-
                 if (!titleEl || !valueEl) continue;
 
                 const title = titleEl.textContent.trim();
