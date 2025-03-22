@@ -38,23 +38,26 @@ app.get('/api/dunam', async (req, res) => {
 
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
-        console.log('✅ 페이지 접속 완료:', url);
+
+        // 요소가 로딩될 때까지 대기
+        await page.waitForSelector('.abbot-alldeal', { timeout: 5000 });
+        console.log('✅ 페이지 접속 성공:', url);
 
         let text = null;
         let isBuff = false;
 
         try {
-            // 딜러용 선택자
+            // 딜러용
             text = await page.$eval(
-                '#content-container .abbot-alldeal .abbot-topdamage .value',
+                '.abbot-topdamage .value',
                 el => el.textContent.trim()
             );
         } catch (err) {
             console.warn('⚠️ 딜 선택자 실패:', err.message);
             try {
-                // 버퍼용 선택자
+                // 버퍼용
                 text = await page.$eval(
-                    '#content-container .abbot-alldeal .abbot-topbuff .value',
+                    '.abbot-topbuff .value',
                     el => el.textContent.trim()
                 );
                 isBuff = true;
