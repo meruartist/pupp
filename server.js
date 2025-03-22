@@ -39,24 +39,23 @@ app.get('/api/dunam', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
 
-        // 두 영역 중 하나라도 로드되면 계속 진행
         await page.waitForSelector('.tab__content[name="랭킹"], .tab__content[name="버프계산"]', { timeout: 10000 });
 
         console.log('✅ 페이지 접속 성공:', url);
 
         const data = await page.evaluate(() => {
-            // 총딜 (랭킹 탭 기준)
-            const totalEl = document.querySelector('.tab__content[name="랭킹"] .demval .dval');
-            const total = totalEl ? totalEl.textContent.trim() : null;
-
-            // 버프 점수 (버프계산 탭 기준)
+            // 버프 점수 (버프계산 탭)
             const buffEl = document.querySelector('.tab__content[name="버프계산"] .buffpoint-box .dval');
-            const buff = buffEl ? buffEl.textContent.trim() : null;
+            const buffText = buffEl ? buffEl.textContent.trim() : null;
 
-            if (total) {
-                return { value: total, isBuff: false };
-            } else if (buff) {
-                return { value: buff, isBuff: true };
+            // 총딜 (랭킹 탭)
+            const totalEl = document.querySelector('.tab__content[name="랭킹"] .demval .dval');
+            const totalText = totalEl ? totalEl.textContent.trim() : null;
+
+            if (buffText) {
+                return { value: buffText, isBuff: true };
+            } else if (totalText) {
+                return { value: totalText, isBuff: false };
             } else {
                 return { value: null, isBuff: false };
             }
