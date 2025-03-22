@@ -38,13 +38,13 @@ app.get('/api/dunam', async (req, res) => {
 
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
-        await page.waitForSelector('.abbot-alldeal-box .score', { timeout: 5000 });
+        await page.waitForSelector('.tab__content[name="랭킹"] .dval', { timeout: 10000 });
 
         console.log('✅ 페이지 접속 성공:', url);
 
         const data = await page.evaluate(() => {
-            const scoreEl = document.querySelector('.abbot-alldeal-box .score');
-            const value = scoreEl ? scoreEl.textContent.trim() : null;
+            const target = document.querySelector('.tab__content[name="랭킹"] .demval .dval');
+            const value = target ? target.textContent.trim() : null;
             return {
                 value,
                 isBuff: false
