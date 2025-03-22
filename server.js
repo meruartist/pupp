@@ -38,40 +38,17 @@ app.get('/api/dunam', async (req, res) => {
 
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
-        await page.waitForSelector('.abbot-alldeal', { timeout: 5000 });
+        await page.waitForSelector('.abbot-alldeal-box .score', { timeout: 5000 });
 
         console.log('✅ 페이지 접속 성공:', url);
 
         const data = await page.evaluate(() => {
-            const section = document.querySelector('.abbot-alldeal'); // 하단 총딜 구간
-            if (!section) return { value: null, isBuff: false };
-
-            const rows = Array.from(section.querySelectorAll('.demval'));
-            let value = null;
-            let isBuff = false;
-
-            for (const el of rows) {
-                const titleEl = el.querySelector('.dvtit');
-                const valueEl = el.querySelector('.dval');
-                if (!titleEl || !valueEl) continue;
-
-                const title = titleEl.textContent.trim();
-                const val = valueEl.textContent.trim();
-
-                if (title === '총딜') {
-                    value = val;
-                    isBuff = false;
-                    break;
-                }
-
-                if (title.includes('버프')) {
-                    value = val;
-                    isBuff = true;
-                    break;
-                }
-            }
-
-            return { value, isBuff };
+            const scoreEl = document.querySelector('.abbot-alldeal-box .score');
+            const value = scoreEl ? scoreEl.textContent.trim() : null;
+            return {
+                value,
+                isBuff: false
+            };
         });
 
         await browser.close();
@@ -79,7 +56,7 @@ app.get('/api/dunam', async (req, res) => {
         console.log('🎯 추출된 값:', data);
 
         if (!data.value) {
-            console.log('❌ 총딜/버프값 없음');
+            console.log('❌ 총딜값 없음');
             return res.json({ success: false, message: 'No data found' });
         }
 
@@ -88,7 +65,7 @@ app.get('/api/dunam', async (req, res) => {
 
         return res.json({
             success: true,
-            isBuff: data.isBuff,
+            isBuff: false,
             raw: data.value,
             number,
             readable
