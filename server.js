@@ -44,6 +44,7 @@ app.get('/api/dunam', async (req, res) => {
 
         const data = await page.evaluate(() => {
             const all = Array.from(document.querySelectorAll('.demval'));
+            let maxValue = 0;
             let value = null;
             let isBuff = false;
 
@@ -55,17 +56,17 @@ app.get('/api/dunam', async (req, res) => {
 
                 const title = titleEl.textContent.trim();
                 const val = valueEl.textContent.trim();
+                const num = parseInt(val.replace(/[^0-9]/g, ''));
 
-                if (title.includes('총딜')) {
+                if (title.includes('총딜') && !isNaN(num) && num > maxValue) {
+                    maxValue = num;
                     value = val;
                     isBuff = false;
-                    break;
                 }
 
-                if (title.includes('버프')) {
+                if (title.includes('버프') && !value && !isNaN(num)) {
                     value = val;
                     isBuff = true;
-                    break;
                 }
             }
 
