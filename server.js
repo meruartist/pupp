@@ -48,12 +48,15 @@ app.get('/api/dunam', async (req, res) => {
             let isBuff = false;
 
             for (const el of all) {
-                const title = el.querySelector('.dvtit')?.textContent?.trim();
-                const val = el.querySelector('.dval')?.textContent?.trim();
+                const titleEl = el.querySelector('.dvtit');
+                const valueEl = el.querySelector('.dval');
 
-                if (!title || !val) continue;
+                if (!titleEl || !valueEl) continue;
 
-                if (title.includes('총딜')) {
+                const title = titleEl.textContent.trim();
+                const val = valueEl.textContent.trim();
+
+                if (title === '총딜') {
                     value = val;
                     isBuff = false;
                     break;
