@@ -38,49 +38,51 @@ app.get('/api/dunam', async (req, res) => {
 
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
+        await page.waitForSelector('.demval', { timeout: 5000 });
 
-        // 요소가 로딩될 때까지 대기
-        await page.waitForSelector('.abbot-alldeal', { timeout: 5000 });
         console.log('✅ 페이지 접속 성공:', url);
 
-        let text = null;
-        let isBuff = false;
+        const data = await page.evaluate(() => {
+            const all = Array.from(document.querySelectorAll('.demval'));
+            let value = null;
+            let isBuff = false;
 
-        try {
-            // 딜러용
-            text = await page.$eval(
-                '.abbot-topdamage .value',
-                el => el.textContent.trim()
-            );
-        } catch (err) {
-            console.warn('⚠️ 딜 선택자 실패:', err.message);
-            try {
-                // 버퍼용
-                text = await page.$eval(
-                    '.abbot-topbuff .value',
-                    el => el.textContent.trim()
-                );
-                isBuff = true;
-            } catch (e2) {
-                console.error('❌ 버프 선택자도 실패:', e2.message);
-                text = null;
+            for (const el of all) {
+                const title = el.querySelector('.dvtit')?.textContent?.trim();
+                const val = el.querySelector('.dval')?.textContent?.trim();
+
+                if (!title || !val) continue;
+
+                if (title.includes('총딜')) {
+                    value = val;
+                    isBuff = false;
+                    break;
+                }
+
+                if (title.includes('버프')) {
+                    value = val;
+                    isBuff = true;
+                    break;
+                }
             }
-        }
+
+            return { value, isBuff };
+        });
 
         await browser.close();
 
-        if (!text) {
-            console.log('❌ text 없음');
+        if (!data.value) {
+            console.log('❌ 총딜/버프값 없음');
             return res.json({ success: false, message: 'No data found' });
         }
 
-        const number = parseInt(text.replace(/[^0-9]/g, ''));
+        const number = parseInt(data.value.replace(/[^0-9]/g, ''));
         const readable = isNaN(number) ? null : formatToReadableKoreanNumber(number);
 
         return res.json({
             success: true,
-            isBuff,
-            raw: text,
+            isBuff: data.isBuff,
+            raw: data.value,
             number,
             readable
         });
