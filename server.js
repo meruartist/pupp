@@ -38,17 +38,28 @@ app.get('/api/dunam', async (req, res) => {
 
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
-        await page.waitForSelector('.tab__content[name="랭킹"] .dval', { timeout: 10000 });
+
+        // 딜, 버프 요소를 기다림 (하나라도 있으면 OK)
+        await page.waitForSelector('.tab__content[name="랭킹"], .buffpoint-box', { timeout: 10000 });
 
         console.log('✅ 페이지 접속 성공:', url);
 
         const data = await page.evaluate(() => {
-            const target = document.querySelector('.tab__content[name="랭킹"] .demval .dval');
-            const value = target ? target.textContent.trim() : null;
-            return {
-                value,
-                isBuff: false
-            };
+            // 랭킹 탭 총딜
+            const totalEl = document.querySelector('.tab__content[name="랭킹"] .demval .dval');
+            const total = totalEl ? totalEl.textContent.trim() : null;
+
+            // 버프 점수
+            const buffEl = document.querySelector('.buffpoint-box .dval');
+            const buff = buffEl ? buffEl.textContent.trim() : null;
+
+            if (total) {
+                return { value: total, isBuff: false };
+            } else if (buff) {
+                return { value: buff, isBuff: true };
+            } else {
+                return { value: null, isBuff: false };
+            }
         });
 
         await browser.close();
@@ -56,7 +67,7 @@ app.get('/api/dunam', async (req, res) => {
         console.log('🎯 추출된 값:', data);
 
         if (!data.value) {
-            console.log('❌ 총딜값 없음');
+            console.log('❌ 총딜/버프값 없음');
             return res.json({ success: false, message: 'No data found' });
         }
 
@@ -65,7 +76,7 @@ app.get('/api/dunam', async (req, res) => {
 
         return res.json({
             success: true,
-            isBuff: false,
+            isBuff: data.isBuff,
             raw: data.value,
             number,
             readable
