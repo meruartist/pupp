@@ -39,18 +39,18 @@ app.get('/api/dunam', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
 
-        // 딜, 버프 요소를 기다림 (하나라도 있으면 OK)
-        await page.waitForSelector('.tab__content[name="랭킹"], .buffpoint-box', { timeout: 10000 });
+        // 두 영역 중 하나라도 로드되면 계속 진행
+        await page.waitForSelector('.tab__content[name="랭킹"], .tab__content[name="버프계산"]', { timeout: 10000 });
 
         console.log('✅ 페이지 접속 성공:', url);
 
         const data = await page.evaluate(() => {
-            // 랭킹 탭 총딜
+            // 총딜 (랭킹 탭 기준)
             const totalEl = document.querySelector('.tab__content[name="랭킹"] .demval .dval');
             const total = totalEl ? totalEl.textContent.trim() : null;
 
-            // 버프 점수
-            const buffEl = document.querySelector('.buffpoint-box .dval');
+            // 버프 점수 (버프계산 탭 기준)
+            const buffEl = document.querySelector('.tab__content[name="버프계산"] .buffpoint-box .dval');
             const buff = buffEl ? buffEl.textContent.trim() : null;
 
             if (total) {
