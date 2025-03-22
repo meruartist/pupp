@@ -20,8 +20,11 @@ function formatToReadableKoreanNumber(num) {
 }
 
 app.get('/api/dunam', async (req, res) => {
-    const { server, characterId } = req.query;
+    const DEBUG = false;
+
+    if (DEBUG) {
     console.log('📥 API 요청:', { server, characterId });
+}
 
     if (!server || !characterId) {
         console.error('❌ 파라미터 누락');
