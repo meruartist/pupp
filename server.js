@@ -56,7 +56,7 @@ app.get('/api/dunam', async (req, res) => {
                 const title = titleEl.textContent.trim();
                 const val = valueEl.textContent.trim();
 
-                if (title === '총딜') {
+                if (title.includes('총딜')) {
                     value = val;
                     isBuff = false;
                     break;
@@ -73,6 +73,8 @@ app.get('/api/dunam', async (req, res) => {
         });
 
         await browser.close();
+
+        console.log('🎯 추출된 값:', data);
 
         if (!data.value) {
             console.log('❌ 총딜/버프값 없음');
