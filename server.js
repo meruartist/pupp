@@ -184,19 +184,24 @@ app.get('/api/taecho', async (req, res) => {
 
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
-        await page.waitForSelector('ul.list-group-flush li', { timeout: 10000 });
+
+        await page.waitForSelector('#mistList ul li', { timeout: 10000 });
 
         const items = await page.evaluate(() => {
             const list = [];
-            document.querySelectorAll('ul.list-group-flush li').forEach(li => {
+            const lis = document.querySelectorAll('#mistList ul.list-group-flush li');
+
+            lis.forEach(li => {
                 const p = li.querySelector('p');
                 const img = p?.querySelector('img')?.src;
-                const name = p?.textContent.trim();
+                const name = p?.textContent?.trim();
                 const date = p?.getAttribute('title');
+
                 if (img && name && date) {
                     list.push({ img, name, date });
                 }
             });
+
             return list;
         });
 
@@ -209,6 +214,7 @@ app.get('/api/taecho', async (req, res) => {
         return res.status(500).json({ success: false, message: 'Internal error' });
     }
 });
+
 
 app.get('/', (req, res) => {
     res.send('✅ Dunam Puppeteer API is running');
