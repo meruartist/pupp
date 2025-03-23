@@ -166,6 +166,50 @@ app.get('/api/dfgear', async (req, res) => {
     }
 });
 
+
+
+app.get('/api/taecho', async (req, res) => {
+    const { server, characterId, characterName } = req.query;
+    if (!server || !characterId || !characterName) {
+        return res.status(400).json({ success: false, message: 'Missing parameters' });
+    }
+
+    const url = `https://dfgear.xyz/character?sId=${server}&cName=${encodeURIComponent(characterName)}&cId=${characterId}`;
+
+    try {
+        const browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+
+        const page = await browser.newPage();
+        await page.goto(url, { waitUntil: 'networkidle2' });
+        await page.waitForSelector('ul.list-group-flush li', { timeout: 10000 });
+
+        const items = await page.evaluate(() => {
+            const list = [];
+            document.querySelectorAll('ul.list-group-flush li').forEach(li => {
+                const p = li.querySelector('p');
+                const img = p?.querySelector('img')?.src;
+                const name = p?.textContent.trim();
+                const date = p?.getAttribute('title');
+                if (img && name && date) {
+                    list.push({ img, name, date });
+                }
+            });
+            return list;
+        });
+
+        await browser.close();
+
+        return res.json({ success: true, items });
+
+    } catch (err) {
+        console.error('🔥 태초 리스트 추출 실패:', err);
+        return res.status(500).json({ success: false, message: 'Internal error' });
+    }
+});
+
 app.get('/', (req, res) => {
     res.send('✅ Dunam Puppeteer API is running');
 });
