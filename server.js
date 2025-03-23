@@ -19,18 +19,12 @@ function formatToReadableKoreanNumber(num) {
     return result;
 }
 
-// ✅ 던담 API
+// ✅ 던담 총딜/버프
 app.get('/api/dunam', async (req, res) => {
     const { server, characterId } = req.query;
-    console.log('📥 API 요청:', { server, characterId });
-
-    if (!server || !characterId) {
-        console.error('❌ 파라미터 누락');
-        return res.status(400).json({ success: false, message: 'Missing params' });
-    }
+    if (!server || !characterId) return res.status(400).json({ success: false, message: 'Missing params' });
 
     const url = `https://dundam.xyz/character?server=${server}&key=${characterId}`;
-
     try {
         const browser = await puppeteer.launch({
             headless: 'new',
@@ -42,8 +36,6 @@ app.get('/api/dunam', async (req, res) => {
 
         await page.waitForSelector('.tab__content[name="랭킹"], .tab__content[name="버프계산"]', { timeout: 10000 });
 
-        console.log('✅ 페이지 접속 성공:', url);
-
         const data = await page.evaluate(() => {
             const buffEl = document.querySelector('.tab__content[name="버프계산"] .buffpoint-box .dval');
             const buffText = buffEl ? buffEl.textContent.trim() : null;
@@ -51,20 +43,14 @@ app.get('/api/dunam', async (req, res) => {
             const totalEl = document.querySelector('.tab__content[name="랭킹"] .demval .dval');
             const totalText = totalEl ? totalEl.textContent.trim() : null;
 
-            if (buffText) {
-                return { value: buffText, isBuff: true };
-            } else if (totalText) {
-                return { value: totalText, isBuff: false };
-            } else {
-                return { value: null, isBuff: false };
-            }
+            if (buffText) return { value: buffText, isBuff: true };
+            if (totalText) return { value: totalText, isBuff: false };
+            return { value: null, isBuff: false };
         });
 
         await browser.close();
 
-        if (!data.value) {
-            return res.json({ success: false, message: 'No data found' });
-        }
+        if (!data.value) return res.json({ success: false, message: 'No data found' });
 
         const number = parseInt(data.value.replace(/[^0-9]/g, ''));
         const readable = isNaN(number) ? null : formatToReadableKoreanNumber(number);
@@ -78,22 +64,18 @@ app.get('/api/dunam', async (req, res) => {
         });
 
     } catch (err) {
-        console.error('🔥 서버 내부 오류:', err);
         return res.status(500).json({ success: false, message: 'Internal error' });
     }
 });
 
-// ✅ dfgear API
+// ✅ 기린 득템 정보
 app.get('/api/dfgear', async (req, res) => {
     const { server, characterId, characterName } = req.query;
-    console.log('📥 DFGEAR 요청:', { server, characterId, characterName });
-
     if (!server || !characterId || !characterName) {
         return res.status(400).json({ success: false, message: 'Missing parameters' });
     }
 
     const url = `https://dfgear.xyz/character?sId=${server}&cName=${encodeURIComponent(characterName)}&cId=${characterId}`;
-
     try {
         const browser = await puppeteer.launch({
             headless: 'new',
@@ -102,9 +84,8 @@ app.get('/api/dfgear', async (req, res) => {
 
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
-        await page.waitForSelector('.fameNumber', { timeout: 10000 });
 
-        console.log('✅ DFGEAR 페이지 접속 성공:', url);
+        await page.waitForSelector('.fameNumber', { timeout: 10000 });
 
         const data = await page.evaluate(() => {
             const getText = (selector) => {
@@ -138,36 +119,21 @@ app.get('/api/dfgear', async (req, res) => {
             }
 
             return {
-                fame,
-                kirinRank,
-                obtainRank,
-                ancient,
-                epic,
-                legendary,
-                abyss,
-                potEpic,
-                potLegend,
-                updated
+                fame, kirinRank, obtainRank, ancient, epic, legendary,
+                abyss, potEpic, potLegend, updated
             };
         });
 
         await browser.close();
 
-        console.log('🎯 DFGEAR 추출 결과:', data);
-
-        return res.json({
-            success: true,
-            ...data
-        });
+        return res.json({ success: true, ...data });
 
     } catch (err) {
-        console.error('🔥 DFGEAR 서버 오류:', err);
         return res.status(500).json({ success: false, message: 'Internal error' });
     }
 });
 
-
-
+// ✅ 태초 아이템 리스트만 추출
 app.get('/api/taecho', async (req, res) => {
     const { server, characterId, characterName } = req.query;
     if (!server || !characterId || !characterName) {
@@ -189,7 +155,9 @@ app.get('/api/taecho', async (req, res) => {
 
         const items = await page.evaluate(() => {
             const list = [];
-            const lis = document.querySelectorAll('#mistList ul.list-group-flush li');
+            const mistCard = document.querySelector('#mistList');
+            const ul = mistCard?.querySelector('div.card-header.begin + ul');
+            const lis = ul?.querySelectorAll('li') ?? [];
 
             lis.forEach(li => {
                 const p = li.querySelector('p');
@@ -214,7 +182,6 @@ app.get('/api/taecho', async (req, res) => {
         return res.status(500).json({ success: false, message: 'Internal error' });
     }
 });
-
 
 app.get('/', (req, res) => {
     res.send('✅ Dunam Puppeteer API is running');
