@@ -156,20 +156,20 @@ app.get('/api/taecho', async (req, res) => {
         const items = await page.evaluate(() => {
             const list = [];
             const mistCard = document.querySelector('#mistList');
-            const ul = mistCard?.querySelector('div.card-header.begin + ul');
+            const ul = mistCard?.querySelector('ul.list-group');
             const lis = ul?.querySelectorAll('li') ?? [];
-
+        
             lis.forEach(li => {
                 const p = li.querySelector('p');
                 const img = p?.querySelector('img')?.src;
                 const name = p?.textContent?.trim();
-                const date = p?.getAttribute('title');
-
+                const date = p?.getAttribute('data-title') || li.getAttribute('title');
+        
                 if (img && name && date) {
                     list.push({ img, name, date });
                 }
             });
-
+        
             return list;
         });
 
