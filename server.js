@@ -22,9 +22,7 @@ function formatToReadableKoreanNumber(num) {
 // ✅ 던담 총딜/버프
 app.get('/api/dunam', async (req, res) => {
     const { server, characterId } = req.query;
-    if (!server || !characterId) {
-        return res.status(400).json({ success: false, message: 'Missing params' });
-    }
+    if (!server || !characterId) return res.status(400).json({ success: false, message: 'Missing params' });
 
     const url = `https://dundam.xyz/character?server=${server}&key=${characterId}`;
     try {
@@ -36,17 +34,27 @@ app.get('/api/dunam', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
 
-        await page.waitForSelector('.tab__content[name="랭킹"], .tab__content[name="버프계산"]', { timeout: 10000 });
+        await page.waitForSelector('.tab > li[data-name="버프계산"]', { timeout: 10000 });
 
-        const data = await page.evaluate(() => {
+        const data = await page.evaluate(async () => {
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
             const getText = (selector) => {
                 const el = document.querySelector(selector);
                 return el ? el.textContent.trim() : null;
             };
 
+            // 탭 클릭 유도 (버프계산 먼저)
+            const buffTab = document.querySelector('.tab > li[data-name="버프계산"]');
+            if (buffTab) buffTab.click();
+            await sleep(1000);
+
             const buffText = getText('.tab__content[name="버프계산"] .buffpoint-box .dval');
 
-            // 총딜: demval이 없으면 skc에서 대체
+            // 딜 탭 클릭 유도
+            const rankTab = document.querySelector('.tab > li[data-name="랭킹"]');
+            if (rankTab) rankTab.click();
+            await sleep(1000);
+
             let totalText = getText('.tab__content[name="랭킹"] .demval .dval');
             if (!totalText) {
                 const valList = [...document.querySelectorAll('.tab__content[name="랭킹"] .skc ul li span.val')];
@@ -74,7 +82,7 @@ app.get('/api/dunam', async (req, res) => {
         });
 
     } catch (err) {
-        console.error('❌ puppeteer 오류:', err.message);
+        console.error('❌ puppeteer 에러:', err.message);
         return res.status(500).json({ success: false, message: 'Internal error' });
     }
 });
