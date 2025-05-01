@@ -13,9 +13,9 @@ function formatToReadableKoreanNumber(num) {
     const thousand = num % 10000;
 
     let result = '';
-    if (billion > 0) result += ${billion}억;
-    if (million > 0) result += ${million}만;
-    if (thousand > 0 && billion === 0) result += ${thousand};
+    if (billion > 0) result += `${billion}억`;
+    if (million > 0) result += `${million}만`;
+    if (thousand > 0 && billion === 0) result += `${thousand}`;
     return result;
 }
 
