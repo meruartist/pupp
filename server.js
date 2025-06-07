@@ -200,26 +200,22 @@ app.get('/api/adventure-stat', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
 
-        // ✅ 한글 웹폰트 강제 적용
+        // ✅ 한글 글꼴 깨짐 방지
         await page.addStyleTag({ url: 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap' });
         await page.addStyleTag({
-            content: `
-                * {
-                    font-family: 'Noto Sans KR', sans-serif !important;
-                }
-            `
+            content: `* { font-family: 'Noto Sans KR', sans-serif !important; }`
         });
 
-        // 전체 화면 크기 조정
-        const height = await page.evaluate(() => document.body.scrollHeight);
-        await page.setViewport({ width: 1400, height });
+        // ✅ 원하는 영역만 캡처: #detailTable
+        const target = await page.$('#detailTable');
+        if (!target) {
+            await browser.close();
+            return res.status(500).json({ success: false, message: '#detailTable not found' });
+        }
 
-        // 전체 body 영역 캡처
-        const target = await page.$('body');
         const imageBuffer = await target.screenshot({ type: 'png' });
 
         await browser.close();
-
         res.setHeader('Content-Type', 'image/png');
         res.send(imageBuffer);
     } catch (err) {
