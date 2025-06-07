@@ -237,9 +237,8 @@ app.get('/', (req, res) => {
 });
 
 
-// ✅ 태초 채널 순위 이미지 캡처
 app.get('/api/taecho-channel-image', async (req, res) => {
-    const url = 'https://dfgear.xyz/taecho'; // 예시 페이지, 실제 경로 확인 필요
+    const url = 'https://dfgear.xyz/taecho'; // 실제 페이지 URL로 교체 필요
 
     try {
         const browser = await puppeteer.launch({
@@ -250,9 +249,14 @@ app.get('/api/taecho-channel-image', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
 
-        const element = await page.waitForSelector('body > div.container > div.row.aggregate > div:nth-child(2) > div > ul > li:nth-child(1)', {
-            timeout: 10000
-        });
+        // 정확한 요소 대기 및 캡처
+        const selector = 'body > div.container > div.row.aggregate > div:nth-child(2) > div > ul > li:nth-child(1)';
+        await page.waitForSelector(selector, { timeout: 15000 });
+        const element = await page.$(selector);
+
+        if (!element) {
+            throw new Error('🎯 대상 요소를 찾을 수 없습니다.');
+        }
 
         const buffer = await element.screenshot({ type: 'png' });
 
@@ -262,10 +266,9 @@ app.get('/api/taecho-channel-image', async (req, res) => {
         res.send(buffer);
     } catch (err) {
         console.error('🔥 태초 채널 이미지 캡처 실패:', err);
-        res.status(500).json({ success: false, message: '스크린샷 실패' });
+        res.status(500).json({ success: false, message: '스크린샷 실패', error: err.message });
     }
 });
-
 app.listen(PORT, () => {
     console.log(`🚀 Server listening on port ${PORT}`);
 });
