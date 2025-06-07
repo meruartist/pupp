@@ -1,4 +1,4 @@
-require('express');
+const express = require('express');
 const puppeteer = require('puppeteer');
 const cors = require('cors');
 
@@ -24,7 +24,7 @@ app.get('/api/dunam', async (req, res) => {
     const { server, characterId } = req.query;
     if (!server || !characterId) return res.status(400).json({ success: false, message: 'Missing params' });
 
-    const url = https://dundam.xyz/character?server=${server}&key=${characterId};
+    const url = `https://dundam.xyz/character?server=${server}&key=${characterId}`;
     try {
         const browser = await puppeteer.launch({
             headless: 'new',
@@ -75,7 +75,7 @@ app.get('/api/dfgear', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Missing parameters' });
     }
 
-    const url = https://dfgear.xyz/character?sId=${server}&cName=${encodeURIComponent(characterName)}&cId=${characterId};
+    const url = `https://dfgear.xyz/character?sId=${server}&cName=${encodeURIComponent(characterName)}&cId=${characterId}`;
     try {
         const browser = await puppeteer.launch({
             headless: 'new',
@@ -96,7 +96,7 @@ app.get('/api/dfgear', async (req, res) => {
             const getSpanText = (contains) => {
                 const spans = [...document.querySelectorAll('span.card-text')];
                 const el = spans.find(s => s.textContent.includes(contains));
-                return el ? el.textContent.replace(${contains} : , '').trim() : null;
+                return el ? el.textContent.replace(`${contains} : `, '').trim() : null;
             };
 
             const fame = getText('.fameNumber');
@@ -133,14 +133,14 @@ app.get('/api/dfgear', async (req, res) => {
     }
 });
 
-// ✅ 태초 아이템 리스트만 추출
+// ✅ 태초 아이템 리스트
 app.get('/api/taecho', async (req, res) => {
     const { server, characterId, characterName } = req.query;
     if (!server || !characterId || !characterName) {
         return res.status(400).json({ success: false, message: 'Missing parameters' });
     }
 
-    const url = https://dfgear.xyz/character?sId=${server}&cName=${encodeURIComponent(characterName)}&cId=${characterId};
+    const url = `https://dfgear.xyz/character?sId=${server}&cName=${encodeURIComponent(characterName)}&cId=${characterId}`;
 
     try {
         const browser = await puppeteer.launch({
@@ -158,18 +158,18 @@ app.get('/api/taecho', async (req, res) => {
             const mistCard = document.querySelector('#mistList');
             const ul = mistCard?.querySelector('ul.list-group');
             const lis = ul?.querySelectorAll('li') ?? [];
-        
+
             lis.forEach(li => {
                 const p = li.querySelector('p');
                 const img = p?.querySelector('img')?.src;
                 const name = p?.textContent?.trim();
                 const date = p?.getAttribute('data-title') || li.getAttribute('title');
-        
+
                 if (img && name && date) {
                     list.push({ img, name, date });
                 }
             });
-        
+
             return list;
         });
 
@@ -183,10 +183,7 @@ app.get('/api/taecho', async (req, res) => {
     }
 });
 
-app.get('/', (req, res) => {
-    res.send('✅ Dunam Puppeteer API is running');
-});
-
+// ✅ 모험단 통계 스크린샷 (신규 추가)
 app.get('/api/adventure-stat', async (req, res) => {
     const { advName } = req.query;
     if (!advName) return res.status(400).json({ success: false, message: 'Missing advName' });
@@ -216,6 +213,10 @@ app.get('/api/adventure-stat', async (req, res) => {
     }
 });
 
+app.get('/', (req, res) => {
+    res.send('✅ Dunam Puppeteer API is running');
+});
+
 app.listen(PORT, () => {
-    console.log(🚀 Server listening on port ${PORT});
-}); 
+    console.log(`🚀 Server listening on port ${PORT}`);
+});
