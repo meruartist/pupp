@@ -198,20 +198,35 @@ app.get('/api/adventure-stat', async (req, res) => {
         });
 
         const page = await browser.newPage();
+
+        // ✅ 넓은 화면과 고해상도 설정
+        await page.setViewport({ width: 1600, height: 1200, deviceScaleFactor: 2 });
+
         console.log('[DEBUG] 접속 시도:', url);
         await page.goto(url, { waitUntil: 'networkidle2' });
 
-        // ✅ 웹폰트 적용 (한글 깨짐 방지)
+        // ✅ 한글 폰트 및 확대 스타일 적용
         await page.addStyleTag({ url: 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap' });
         await page.addStyleTag({
-            content: `* { font-family: 'Noto Sans KR', sans-serif !important; }`
+            content: `
+                * {
+                    font-family: 'Noto Sans KR', sans-serif !important;
+                }
+                #detailTable {
+                    margin: 0 auto;
+                    transform: scale(1.3);
+                    transform-origin: top center;
+                }
+                body {
+                    background-color: white;
+                }
+            `
         });
 
-        // ✅ #detailTable 명확하게 셀렉터로 대기
+        // ✅ #detailTable 로딩 대기
         await page.waitForSelector('#detailTable', { timeout: 15000 });
         console.log('[DEBUG] #detailTable 로드됨');
 
-        // ✅ 안전한 방식: CSS selector 기준
         const target = await page.$('#detailTable');
         if (!target) {
             console.error('❌ 캡처 대상 #detailTable을 찾지 못했습니다.');
@@ -219,19 +234,18 @@ app.get('/api/adventure-stat', async (req, res) => {
             return res.status(500).json({ success: false, message: '#detailTable not found' });
         }
 
-        // ✅ 캡처 진행
         const imageBuffer = await target.screenshot({ type: 'png' });
         console.log('[DEBUG] 캡처 완료');
 
         await browser.close();
         res.setHeader('Content-Type', 'image/png');
         res.send(imageBuffer);
-
     } catch (err) {
         console.error('🔥 모험단 통계 캡처 오류:', err);
         return res.status(500).json({ success: false, message: err.message || 'Internal error' });
     }
 });
+
 app.get('/', (req, res) => {
     res.send('✅ Dunam Puppeteer API is running');
 });
