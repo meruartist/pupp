@@ -187,6 +187,35 @@ app.get('/', (req, res) => {
     res.send('✅ Dunam Puppeteer API is running');
 });
 
+app.get('/api/adventure-stat', async (req, res) => {
+    const { advName } = req.query;
+    if (!advName) return res.status(400).json({ success: false, message: 'Missing advName' });
+
+    const url = `https://dfgear.xyz/advtDetail?name=${encodeURIComponent(advName)}`;
+
+    try {
+        const browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1280, height: 1080 });
+        await page.goto(url, { waitUntil: 'networkidle2' });
+        await page.waitForSelector('div.card-body', { timeout: 10000 });
+
+        const target = await page.$('div.card-body');
+        const imageBuffer = await target.screenshot({ type: 'png' });
+
+        await browser.close();
+        res.setHeader('Content-Type', 'image/png');
+        res.send(imageBuffer);
+    } catch (err) {
+        console.error('🔥 모험단 통계 스크린샷 오류:', err);
+        return res.status(500).json({ success: false, message: 'Internal error' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(🚀 Server listening on port ${PORT});
 }); 
