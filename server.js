@@ -236,6 +236,36 @@ app.get('/', (req, res) => {
     res.send('✅ Dunam Puppeteer API is running');
 });
 
+
+// ✅ 태초 채널 순위 이미지 캡처
+app.get('/api/taecho-channel-image', async (req, res) => {
+    const url = 'https://dfgear.xyz/taecho'; // 예시 페이지, 실제 경로 확인 필요
+
+    try {
+        const browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+
+        const page = await browser.newPage();
+        await page.goto(url, { waitUntil: 'networkidle2' });
+
+        const element = await page.waitForSelector('body > div.container > div.row.aggregate > div:nth-child(2) > div > ul > li:nth-child(1)', {
+            timeout: 10000
+        });
+
+        const buffer = await element.screenshot({ type: 'png' });
+
+        await browser.close();
+
+        res.set('Content-Type', 'image/png');
+        res.send(buffer);
+    } catch (err) {
+        console.error('🔥 태초 채널 이미지 캡처 실패:', err);
+        res.status(500).json({ success: false, message: '스크린샷 실패' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Server listening on port ${PORT}`);
 });
