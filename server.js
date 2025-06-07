@@ -198,36 +198,40 @@ app.get('/api/adventure-stat', async (req, res) => {
         });
 
         const page = await browser.newPage();
+        console.log('[DEBUG] 접속 시도:', url);
         await page.goto(url, { waitUntil: 'networkidle2' });
 
-        // ✅ 한글 웹폰트 강제 적용
+        // ✅ 웹폰트 적용 (한글 깨짐 방지)
         await page.addStyleTag({ url: 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap' });
         await page.addStyleTag({
             content: `* { font-family: 'Noto Sans KR', sans-serif !important; }`
         });
 
-        // ✅ detailTable 요소가 등장할 때까지 기다림
+        // ✅ #detailTable 명확하게 셀렉터로 대기
         await page.waitForSelector('#detailTable', { timeout: 15000 });
+        console.log('[DEBUG] #detailTable 로드됨');
 
-        // ✅ 정확한 XPath로 요소 선택
-        const [target] = await page.$x('//*[@id="detailTable"]');
+        // ✅ 안전한 방식: CSS selector 기준
+        const target = await page.$('#detailTable');
         if (!target) {
+            console.error('❌ 캡처 대상 #detailTable을 찾지 못했습니다.');
             await browser.close();
             return res.status(500).json({ success: false, message: '#detailTable not found' });
         }
 
+        // ✅ 캡처 진행
         const imageBuffer = await target.screenshot({ type: 'png' });
+        console.log('[DEBUG] 캡처 완료');
 
         await browser.close();
-
         res.setHeader('Content-Type', 'image/png');
         res.send(imageBuffer);
+
     } catch (err) {
         console.error('🔥 모험단 통계 캡처 오류:', err);
-        return res.status(500).json({ success: false, message: 'Internal error' });
+        return res.status(500).json({ success: false, message: err.message || 'Internal error' });
     }
 });
-
 app.get('/', (req, res) => {
     res.send('✅ Dunam Puppeteer API is running');
 });
