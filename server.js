@@ -184,6 +184,7 @@ app.get('/api/taecho', async (req, res) => {
 });
 
 // ✅ 모험단 통계 스크린샷 (신규 추가)
+// ✅ 모험단 통계 전체 캡처 + 한글 깨짐 방지
 app.get('/api/adventure-stat', async (req, res) => {
     const { advName } = req.query;
     if (!advName) return res.status(400).json({ success: false, message: 'Missing advName' });
@@ -197,14 +198,28 @@ app.get('/api/adventure-stat', async (req, res) => {
         });
 
         const page = await browser.newPage();
-        await page.setViewport({ width: 1280, height: 1080 });
         await page.goto(url, { waitUntil: 'networkidle2' });
-        await page.waitForSelector('div.card-body', { timeout: 10000 });
 
-        const target = await page.$('div.card-body');
+        // ✅ 한글 웹폰트 강제 적용
+        await page.addStyleTag({ url: 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap' });
+        await page.addStyleTag({
+            content: `
+                * {
+                    font-family: 'Noto Sans KR', sans-serif !important;
+                }
+            `
+        });
+
+        // 전체 화면 크기 조정
+        const height = await page.evaluate(() => document.body.scrollHeight);
+        await page.setViewport({ width: 1400, height });
+
+        // 전체 body 영역 캡처
+        const target = await page.$('body');
         const imageBuffer = await target.screenshot({ type: 'png' });
 
         await browser.close();
+
         res.setHeader('Content-Type', 'image/png');
         res.send(imageBuffer);
     } catch (err) {
