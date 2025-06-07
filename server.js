@@ -200,26 +200,27 @@ app.get('/api/adventure-stat', async (req, res) => {
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle2' });
 
-        // ✅ 한글 글꼴 깨짐 방지
+        // ✅ 한글 깨짐 방지용 웹폰트 적용
         await page.addStyleTag({ url: 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap' });
         await page.addStyleTag({
             content: `* { font-family: 'Noto Sans KR', sans-serif !important; }`
         });
 
-        // ✅ 원하는 영역만 캡처: #detailTable
-        const target = await page.$('#detailTable');
+        // ✅ XPath 기반 정확한 요소 선택
+        const [target] = await page.$x('//*[@id="detailTable"]');
         if (!target) {
             await browser.close();
-            return res.status(500).json({ success: false, message: '#detailTable not found' });
+            return res.status(500).json({ success: false, message: '❌ #detailTable 요소를 찾지 못했습니다.' });
         }
 
+        // ✅ 해당 요소만 이미지 캡처
         const imageBuffer = await target.screenshot({ type: 'png' });
 
         await browser.close();
         res.setHeader('Content-Type', 'image/png');
         res.send(imageBuffer);
     } catch (err) {
-        console.error('🔥 모험단 통계 스크린샷 오류:', err);
+        console.error('🔥 모험단 통계 캡처 오류:', err);
         return res.status(500).json({ success: false, message: 'Internal error' });
     }
 });
