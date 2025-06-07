@@ -237,38 +237,7 @@ app.get('/', (req, res) => {
 });
 
 
-app.get('/api/taecho-channel-image', async (req, res) => {
-    const url = 'https://dfgear.xyz/taecho'; // 실제 페이지 URL로 교체 필요
 
-    try {
-        const browser = await puppeteer.launch({
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
-
-        const page = await browser.newPage();
-        await page.goto(url, { waitUntil: 'networkidle2' });
-
-        // 정확한 요소 대기 및 캡처
-        const selector = 'body > div.container > div.row.aggregate > div:nth-child(2) > div > ul > li:nth-child(1)';
-        await page.waitForSelector(selector, { timeout: 15000 });
-        const element = await page.$(selector);
-
-        if (!element) {
-            throw new Error('🎯 대상 요소를 찾을 수 없습니다.');
-        }
-
-        const buffer = await element.screenshot({ type: 'png' });
-
-        await browser.close();
-
-        res.set('Content-Type', 'image/png');
-        res.send(buffer);
-    } catch (err) {
-        console.error('🔥 태초 채널 이미지 캡처 실패:', err);
-        res.status(500).json({ success: false, message: '스크린샷 실패', error: err.message });
-    }
-});
 app.listen(PORT, () => {
     console.log(`🚀 Server listening on port ${PORT}`);
 });
