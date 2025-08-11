@@ -18,21 +18,12 @@ function formatToReadableKoreanNumber(num) {
     return result;
 }
 
-const browser = await puppeteer.launch({
-    headless: 'new',
-    executablePath: puppeteer.executablePath(), // 설치된 Chromium 경로 자동 인식
-    args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage'
-    ]
-});
-
 
 // ✅ Puppeteer 실행 안정화
 async function launchBrowser() {
     return await puppeteer.launch({
         headless: 'new',
+        executablePath: puppeteer.executablePath(),
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
