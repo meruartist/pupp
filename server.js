@@ -19,7 +19,6 @@ function formatToReadableKoreanNumber(num) {
 }
 
 
-// ✅ Puppeteer 실행 안정화
 async function launchBrowser() {
     return await puppeteer.launch({
         headless: 'new',
