@@ -34,7 +34,7 @@ async function launchBrowser() {
 }
 
 /* ==========================
-   던담 총딜/버프
+   던담 총딜/버프 (networkidle2 유지)
 ========================== */
 app.get('/api/dunam', async (req, res) => {
     const { server, characterId } = req.query;
@@ -46,7 +46,8 @@ app.get('/api/dunam', async (req, res) => {
         browser = await launchBrowser();
         const page = await browser.newPage();
         page.setDefaultNavigationTimeout(30000);
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        // 🔹 딜/버프력 로딩 보장
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
 
         await page.waitForSelector('.tab__content[name="랭킹"], .tab__content[name="버프계산"]', { timeout: 10000 });
 
@@ -148,8 +149,8 @@ app.get('/api/taecho', async (req, res) => {
         browser = await launchBrowser();
         const page = await browser.newPage();
         page.setDefaultNavigationTimeout(30000);
-
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
         await page.waitForSelector('#mistList ul li', { timeout: 15000 });
 
         const items = await page.evaluate(() => {
