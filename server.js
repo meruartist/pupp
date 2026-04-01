@@ -114,29 +114,21 @@ app.get("/api/dunam", async (req, res) => {
 ========================== */
 app.get("/api/dfgear", async (req, res) => {
   const { server, characterId, characterName } = req.query;
-
   if (!server || !characterId || !characterName) {
-    return res.status(400).json({
-      success: false,
-      message: "Missing parameters",
-    });
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing parameters" });
   }
 
   const url = `https://dfgear.xyz/character?sId=${server}&cName=${encodeURIComponent(characterName)}&cId=${characterId}`;
   let browser;
 
   try {
-    browser = await launchBrowser();
+    browser = await launchBrowser(); // ✅ 기존 launchBrowser 그대로 사용
     const page = await browser.newPage();
     page.setDefaultNavigationTimeout(30000);
 
-    console.log("[DEBUG] /api/dfgear 접속:", url);
-
-    await page.goto(url, {
-      waitUntil: "domcontentloaded",
-      timeout: 30000,
-    });
-
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     await page.waitForSelector("body", { timeout: 10000 });
 
     const data = await page.evaluate(() => {
@@ -168,9 +160,9 @@ app.get("/api/dfgear", async (req, res) => {
         getLineValue("명성 :", "명성:") ||
         "-";
 
-      const taechoOath = getLineValue("태초 서약 :", "태초 서약:") || "0";
+      const epic = getLineValue("태초 서약 :", "태초 서약:") || "0";
 
-      const taechoCrystal = getLineValue("태초 결정 :", "태초 결정:") || "0";
+      const legendary = getLineValue("태초 결정 :", "태초 결정:") || "0";
 
       const epicMix =
         getLineValue("에픽 서약/결정 :", "에픽 서약/결정:") || "0";
@@ -182,22 +174,17 @@ app.get("/api/dfgear", async (req, res) => {
 
       return {
         fame,
-        epic: taechoOath,
-        legendary: taechoCrystal,
+        epic,
+        legendary,
         epicMix,
         ancient,
         updated,
       };
     });
 
-    console.log("[DEBUG] /api/dfgear 추출 결과:", data);
-
-    return res.json({
-      success: true,
-      ...data,
-    });
+    return res.json({ success: true, ...data });
   } catch (err) {
-    console.error("🔥 /api/dfgear 오류:", err);
+    console.error("🔥 /api/dfgear 오류:", err.message);
     return res.status(500).json({
       success: false,
       message: err.message || "Internal error",
