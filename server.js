@@ -20,17 +20,17 @@ function formatToReadableKoreanNumber(num) {
 
 // ✅ Puppeteer 실행 안정화
 async function launchBrowser() {
-    return await puppeteer.launch({
-        headless: 'new',
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--single-process',
-            '--no-zygote'
-        ]
-    });
+  return await puppeteer.launch({
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--no-zygote",
+      "--single-process"
+    ]
+  });
 }
 
 /* ==========================
