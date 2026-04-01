@@ -93,6 +93,9 @@ app.get("/api/dunam", async (req, res) => {
 /* ==========================
    기린 득템 정보
 ========================== */
+/* ==========================
+   기린 득템 정보
+========================== */
 app.get("/api/dfgear", async (req, res) => {
   const { server, characterId, characterName } = req.query;
   if (!server || !characterId || !characterName) {
@@ -103,72 +106,85 @@ app.get("/api/dfgear", async (req, res) => {
 
   const url = `https://dfgear.xyz/character?sId=${server}&cName=${encodeURIComponent(characterName)}&cId=${characterId}`;
   let browser;
+
   try {
-    browser = await launchBrowser();
+    browser = await launchBrowser(); // ✅ 기존 launchBrowser 그대로 사용
     const page = await browser.newPage();
     page.setDefaultNavigationTimeout(30000);
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
 
-    await page.waitForSelector(".fameNumber", { timeout: 10000 });
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.waitForSelector("body", { timeout: 10000 });
 
     const data = await page.evaluate(() => {
-      const getText = (selector) => {
-        const el = document.querySelector(selector);
-        return el ? el.textContent.trim() : null;
-      };
-      const getSpanText = (contains) => {
-        const spans = [...document.querySelectorAll("span.card-text")];
-        const el = spans.find((s) => s.textContent.includes(contains));
-        return el ? el.textContent.replace(`${contains} : `, "").trim() : null;
-      };
+      const lines = (document.body.innerText || "")
+        .split("\n")
+        .map(v => v.trim())
+        .filter(Boolean);
 
-      const fame = getText(".fameNumber");
-      const kirinRank = getText(".rank:nth-of-type(1)")?.replace(
-        "기린 랭킹 : ",
-        "",
-      );
-      const obtainRank = getText(".rank:nth-of-type(2)")?.replace(
-        "획득 랭킹 : ",
-        "",
-      );
-      const ancient = getSpanText("태초 획득");
-      const epic = getSpanText("에픽 획득");
-      const legendary = getSpanText("레전더리 획득");
-      const abyss = getSpanText("심연:숭배자");
-      const potEpic = getText(".potCount .r_epic");
-      const potLegend = getText(".potCount .r_legnd");
-
-      let updated = "-";
-      const spans = [...document.querySelectorAll("span.card-text.small")];
-      for (let i = 0; i < spans.length; i++) {
-        if (spans[i].textContent.includes("최근 업데이트")) {
-          updated = spans[i + 1]?.textContent.trim() ?? "-";
-          break;
+      const getLineValue = (...labels) => {
+        for (const label of labels) {
+          const line = lines.find(v => v.startsWith(label));
+          if (line) {
+            return line.replace(label, "").trim();
+          }
         }
-      }
+        return null;
+      };
+
+      const getNextLineAfter = (label) => {
+        const idx = lines.findIndex(v => v.includes(label));
+        if (idx !== -1 && lines[idx + 1]) {
+          return lines[idx + 1].trim();
+        }
+        return null;
+      };
+
+      const fame =
+        document.querySelector(".fameNumber")?.textContent?.trim() ||
+        getLineValue("명성 :", "명성:") ||
+        "-";
+
+      const epic =
+        getLineValue("태초 서약 :", "태초 서약:") ||
+        "0";
+
+      const legendary =
+        getLineValue("태초 결정 :", "태초 결정:") ||
+        "0";
+
+      const epicMix =
+        getLineValue("에픽 서약/결정 :", "에픽 서약/결정:") ||
+        "0";
+
+      const ancient =
+        getLineValue("중천 태초 획득 :", "중천 태초 획득:") ||
+        "0";
+
+      const updated =
+        getNextLineAfter("최근 업데이트") ||
+        "-";
 
       return {
         fame,
-        kirinRank,
-        obtainRank,
-        ancient,
         epic,
         legendary,
-        abyss,
-        potEpic,
-        potLegend,
+        epicMix,
+        ancient,
         updated,
       };
     });
 
     return res.json({ success: true, ...data });
   } catch (err) {
-    return res.status(500).json({ success: false, message: "Internal error" });
+    console.error("🔥 /api/dfgear 오류:", err.message);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal error",
+    });
   } finally {
     if (browser) await browser.close();
   }
 });
-
 /* ==========================
    태초 아이템 리스트
 ========================== */
