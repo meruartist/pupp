@@ -20,15 +20,23 @@ function formatToReadableKoreanNumber(num) {
 
 // ✅ Puppeteer 실행 안정화
 async function launchBrowser() {
+  const executablePath =
+    process.env.PUPPETEER_EXECUTABLE_PATH ||
+    process.env.CHROME_PATH ||
+    '/usr/bin/chromium';
+
+  console.log('🧭 Chromium path:', executablePath);
+
   return await puppeteer.launch({
     headless: true,
+    executablePath,
     args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--no-zygote",
-      "--single-process"
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--no-zygote',
+      '--single-process'
     ]
   });
 }
