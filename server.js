@@ -135,8 +135,12 @@ app.get('/api/dfgear', async (req, res) => {
         });
 
         return res.json({ success: true, ...data });
-    } catch (err) {
-        return res.status(500).json({ success: false, message: 'Internal error' });
+    } catch (err) {console.error("❌ /api/dfgear 오류:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Internal error",
+            error: err.message,
+            stack: err.stack });
     } finally {
         if (browser) await browser.close();
     }
