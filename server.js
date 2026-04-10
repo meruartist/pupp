@@ -156,26 +156,35 @@ app.get('/api/taecho', async (req, res) => {
         await page.waitForSelector('#mistList', { timeout: 15000 });
 
         const items = await page.evaluate(() => {
-            const parseUl = (ul) => {
-                if (!ul) return [];
+        const list = [];
 
-                const list = [];
-                ul.querySelectorAll('li.list-group-item').forEach(li => {
-                    const p = li.querySelector('p');
-                    const img = p?.querySelector('img')?.getAttribute('src') || null;
-                    const name = p?.textContent?.trim() || null;
-                    const date =
-                        p?.getAttribute('data-title') ||
-                        li.getAttribute('title') ||
-                        null;
+        // 🔥 태초 서약결정 리스트만 정확히 선택
+        const lis = document.evaluate(
+            '//*[@id="mistList"]/ul[2]/li',
+            document,
+            null,
+            XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+            null
+        );
 
-                    if (img && name && date) {
-                        list.push({ img, name, date });
-                    }
-                });
+        for (let i = 0; i < lis.snapshotLength; i++) {
+            const li = lis.snapshotItem(i);
 
-                return list;
-            };
+            const p = li.querySelector('p');
+            const img = p?.querySelector('img')?.getAttribute('src') || null;
+            const name = p?.textContent?.trim() || null;
+            const date =
+                p?.getAttribute('data-title') ||
+                li.getAttribute('title') ||
+                null;
+
+            if (img && name && date) {
+                list.push({ img, name, date });
+            }
+        }
+
+        return list;
+    });
 
             const root = document.querySelector('#mistList');
             if (!root) return [];
