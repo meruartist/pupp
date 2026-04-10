@@ -156,20 +156,14 @@ app.get('/api/taecho', async (req, res) => {
         await page.waitForSelector('#mistList', { timeout: 15000 });
 
         const items = await page.evaluate(() => {
-            function parseListAfterHeader(headerSelector) {
-                const header = document.querySelector(headerSelector);
-                if (!header) return [];
-
-                const ul = header.nextElementSibling;
-                if (!ul || ul.tagName !== 'UL') return [];
+            const parseUl = (ul) => {
+                if (!ul) return [];
 
                 const list = [];
                 ul.querySelectorAll('li.list-group-item').forEach(li => {
                     const p = li.querySelector('p');
                     const img = p?.querySelector('img')?.getAttribute('src') || null;
-                    const name = p?.childNodes?.[p.childNodes.length - 1]?.textContent?.trim()
-                        || p?.textContent?.trim()
-                        || null;
+                    const name = p?.textContent?.trim() || null;
                     const date =
                         p?.getAttribute('data-title') ||
                         li.getAttribute('title') ||
@@ -181,18 +175,17 @@ app.get('/api/taecho', async (req, res) => {
                 });
 
                 return list;
-            }
-
-            const oathItems = parseListAfterHeader('#mistList .card-header.oath');
-            const pledgeItems = parseListAfterHeader('#mistList .card-header.pledge');
-
-            return {
-                oathItems,
-                pledgeItems
             };
+
+            const uls = document.querySelectorAll('#mistList > ul.list-group');
+
+            const oathItems = parseUl(uls[0]);    // 태초 서약 리스트
+            const pledgeItems = parseUl(uls[1]);  // 태초 서약결정 리스트
+
+            return [...oathItems, ...pledgeItems];
         });
 
-        return res.json({ success: true, ...items });
+        return res.json({ success: true, items });
     } catch (err) {
         console.error('🔥 태초 리스트 추출 실패:', err);
         return res.status(500).json({ success: false, message: err.message || 'Internal error' });
