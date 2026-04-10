@@ -177,13 +177,19 @@ app.get('/api/taecho', async (req, res) => {
                 return list;
             };
 
-            const uls = document.querySelectorAll('#mistList > ul.list-group');
+            const root = document.querySelector('#mistList');
+            if (!root) return [];
+
+            const uls = root.querySelectorAll(':scope > ul.list-group');
 
             const oathItems = parseUl(uls[0]);    // 태초 서약 리스트
             const pledgeItems = parseUl(uls[1]);  // 태초 서약결정 리스트
 
             return [...oathItems, ...pledgeItems];
         });
+
+        console.log('[TAECHO] result count =', items.length);
+        console.log('[TAECHO] sample =', items.slice(0, 3));
 
         return res.json({ success: true, items });
     } catch (err) {
