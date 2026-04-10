@@ -146,28 +146,53 @@ app.get('/api/taecho', async (req, res) => {
 
     const url = `https://dfgear.xyz/character?sId=${server}&cName=${encodeURIComponent(characterName)}&cId=${characterId}`;
     let browser;
+
     try {
         browser = await launchBrowser();
         const page = await browser.newPage();
         page.setDefaultNavigationTimeout(30000);
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-        await page.waitForSelector('#mistList ul li', { timeout: 15000 });
+        await page.waitForSelector('#mistList', { timeout: 15000 });
 
         const items = await page.evaluate(() => {
-            const list = [];
-            const lis = document.querySelectorAll('#mistList ul.list-group li');
-            lis.forEach(li => {
-                const p = li.querySelector('p');
-                const img = p?.querySelector('img')?.src;
-                const name = p?.textContent?.trim();
-                const date = p?.getAttribute('data-title') || li.getAttribute('title');
-                if (img && name && date) list.push({ img, name, date });
-            });
-            return list;
+            function parseListAfterHeader(headerSelector) {
+                const header = document.querySelector(headerSelector);
+                if (!header) return [];
+
+                const ul = header.nextElementSibling;
+                if (!ul || ul.tagName !== 'UL') return [];
+
+                const list = [];
+                ul.querySelectorAll('li.list-group-item').forEach(li => {
+                    const p = li.querySelector('p');
+                    const img = p?.querySelector('img')?.getAttribute('src') || null;
+                    const name = p?.childNodes?.[p.childNodes.length - 1]?.textContent?.trim()
+                        || p?.textContent?.trim()
+                        || null;
+                    const date =
+                        p?.getAttribute('data-title') ||
+                        li.getAttribute('title') ||
+                        null;
+
+                    if (img && name && date) {
+                        list.push({ img, name, date });
+                    }
+                });
+
+                return list;
+            }
+
+            const oathItems = parseListAfterHeader('#mistList .card-header.oath');
+            const pledgeItems = parseListAfterHeader('#mistList .card-header.pledge');
+
+            return {
+                oathItems,
+                pledgeItems
+            };
         });
 
-        return res.json({ success: true, items });
+        return res.json({ success: true, ...items });
     } catch (err) {
         console.error('🔥 태초 리스트 추출 실패:', err);
         return res.status(500).json({ success: false, message: err.message || 'Internal error' });
