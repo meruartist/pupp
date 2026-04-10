@@ -18,27 +18,20 @@ function formatToReadableKoreanNumber(num) {
     return result;
 }
 
-// ✅ Puppeteer 실행 안정화
+
 async function launchBrowser() {
-  const executablePath =
-    process.env.PUPPETEER_EXECUTABLE_PATH ||
-    process.env.CHROME_PATH ||
-    '/usr/bin/chromium';
-
-  console.log('🧭 Chromium path:', executablePath);
-
-  return await puppeteer.launch({
-    headless: true,
-    executablePath,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-      '--no-zygote',
-      '--single-process'
-    ]
-  });
+    return await puppeteer.launch({
+        headless: 'new',
+        executablePath: puppeteer.executablePath(),
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--single-process',
+            '--no-zygote'
+        ]
+    });
 }
 
 /* ==========================
@@ -115,9 +108,9 @@ app.get('/api/dfgear', async (req, res) => {
             const fame = getText('.fameNumber');
             const kirinRank = getText('.rank:nth-of-type(1)')?.replace('기린 랭킹 : ', '');
             const obtainRank = getText('.rank:nth-of-type(2)')?.replace('획득 랭킹 : ', '');
-            const ancient = getSpanText('태초 획득');
-            const epic = getSpanText('에픽 획득');
-            const legendary = getSpanText('레전더리 획득');
+            const ancient = getSpanText('중천 태초 획득');
+            const tc = getSpanText('태초 서약');
+            const tca = getSpanText('태초 결정');
             const abyss = getSpanText('심연:숭배자');
             const potEpic = getText('.potCount .r_epic');
             const potLegend = getText('.potCount .r_legnd');
@@ -135,12 +128,8 @@ app.get('/api/dfgear', async (req, res) => {
         });
 
         return res.json({ success: true, ...data });
-    } catch (err) {console.error("❌ /api/dfgear 오류:", err);
-        return res.status(500).json({
-            success: false,
-            message: "Internal error",
-            error: err.message,
-            stack: err.stack });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Internal error' });
     } finally {
         if (browser) await browser.close();
     }
@@ -234,3 +223,4 @@ app.get('/', (req, res) => res.send('✅ Dunam Puppeteer API is running'));
 app.listen(PORT, () => {
     console.log(`🚀 Server listening on port ${PORT}`);
 });
+    
