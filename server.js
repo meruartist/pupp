@@ -124,7 +124,7 @@ app.get('/api/dfgear', async (req, res) => {
                 }
             }
 
-            return { fame, kirinRank, obtainRank, ancient, epic, legendary, abyss, potEpic, potLegend, updated };
+            return { fame, kirinRank, obtainRank, ancient, tc, tca, abyss, potEpic, potLegend, updated };
         });
 
         return res.json({ success: true, ...data });
