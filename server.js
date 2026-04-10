@@ -156,45 +156,35 @@ app.get('/api/taecho', async (req, res) => {
         await page.waitForSelector('#mistList', { timeout: 15000 });
 
         const items = await page.evaluate(() => {
-        const list = [];
+            const result = [];
 
-        // 🔥 태초 서약결정 리스트만 정확히 선택
-        const lis = document.evaluate(
-            '//*[@id="mistList"]/ul[2]/li',
-            document,
-            null,
-            XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-            null
-        );
+            const snapshot = document.evaluate(
+                '//*[@id="mistList"]/ul[2]/li',
+                document,
+                null,
+                XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+                null
+            );
 
-        for (let i = 0; i < lis.snapshotLength; i++) {
-            const li = lis.snapshotItem(i);
+            for (let i = 0; i < snapshot.snapshotLength; i++) {
+                const li = snapshot.snapshotItem(i);
 
-            const p = li.querySelector('p');
-            const img = p?.querySelector('img')?.getAttribute('src') || null;
-            const name = p?.textContent?.trim() || null;
-            const date =
-                p?.getAttribute('data-title') ||
-                li.getAttribute('title') ||
-                null;
+                const p = li.querySelector('p');
+                if (!p) continue;
 
-            if (img && name && date) {
-                list.push({ img, name, date });
+                const img = p.querySelector('img')?.getAttribute('src') || null;
+                const name = p.textContent?.trim() || null;
+                const date =
+                    p.getAttribute('data-title') ||
+                    li.getAttribute('title') ||
+                    null;
+
+                if (img && name && date) {
+                    result.push({ img, name, date });
+                }
             }
-        }
 
-        return list;
-    });
-
-            const root = document.querySelector('#mistList');
-            if (!root) return [];
-
-            const uls = root.querySelectorAll(':scope > ul.list-group');
-
-            const oathItems = parseUl(uls[0]);    // 태초 서약 리스트
-            const pledgeItems = parseUl(uls[1]);  // 태초 서약결정 리스트
-
-            return [...oathItems, ...pledgeItems];
+            return result;
         });
 
         console.log('[TAECHO] result count =', items.length);
