@@ -138,6 +138,9 @@ app.get('/api/dfgear', async (req, res) => {
 /* ==========================
    태초 아이템 리스트
 ========================== */
+/* ==========================
+   태초 아이템 리스트
+========================== */
 app.get('/api/taecho', async (req, res) => {
     const { server, characterId, characterName } = req.query;
     if (!server || !characterId || !characterName) {
@@ -151,40 +154,23 @@ app.get('/api/taecho', async (req, res) => {
         browser = await launchBrowser();
         const page = await browser.newPage();
         page.setDefaultNavigationTimeout(30000);
+
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-        await page.waitForSelector('#mistList', { timeout: 15000 });
+        await page.waitForSelector('#mistList > ul:nth-child(4) > li', { timeout: 15000 });
 
-        const items = await page.evaluate(() => {
-            const result = [];
-
-            const snapshot = document.evaluate(
-                '//*[@id="mistList"]/ul[2]/li',
-                document,
-                null,
-                XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-                null
-            );
-
-            for (let i = 0; i < snapshot.snapshotLength; i++) {
-                const li = snapshot.snapshotItem(i);
-
+        const items = await page.$$eval('#mistList > ul:nth-child(4) > li', (lis) => {
+            return lis.map(li => {
                 const p = li.querySelector('p');
-                if (!p) continue;
-
-                const img = p.querySelector('img')?.getAttribute('src') || null;
-                const name = p.textContent?.trim() || null;
+                const img = p?.querySelector('img')?.getAttribute('src') || null;
+                const name = p?.textContent?.trim() || null;
                 const date =
-                    p.getAttribute('data-title') ||
+                    p?.getAttribute('data-title') ||
                     li.getAttribute('title') ||
                     null;
 
-                if (img && name && date) {
-                    result.push({ img, name, date });
-                }
-            }
-
-            return result;
+                return { img, name, date };
+            }).filter(item => item.img && item.name && item.date);
         });
 
         console.log('[TAECHO] result count =', items.length);
