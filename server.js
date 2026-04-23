@@ -8,14 +8,17 @@ const PORT = process.env.PORT || 8080;
 app.use(cors());
 
 function formatToReadableKoreanNumber(num) {
-    const billion = Math.floor(num / 100000000);
-    const million = Math.floor((num % 100000000) / 10000);
-    const thousand = num % 10000;
+    const trillion = Math.floor(num / 1000000000000); // 조
+    const billion = Math.floor((num % 1000000000000) / 100000000); // 억
+    const million = Math.floor((num % 100000000) / 10000); // 만
+
     let result = '';
-    if (billion > 0) result += `${billion}억`;
+
+    if (trillion > 0) result += `${trillion}조 `;
+    if (billion > 0) result += `${billion}억 `;
     if (million > 0) result += `${million}만`;
-    if (thousand > 0 && billion === 0) result += `${thousand}`;
-    return result;
+
+    return result.trim();
 }
 
 
